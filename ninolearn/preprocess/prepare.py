@@ -168,15 +168,18 @@ def prep_iod():
     """
     Prepare the IOD index dataframe
     """
+    # ivo added '[:dti.shape[0]]' to solve array dimension clash and updated
+    # dti enddate to most recent known value
+
     print("Prepare IOD timeseries.")
 
     data = read_raw.iod()
     data = data.T.unstack()
     data = data.replace(-999, np.nan)
 
-    dti = pd.date_range(start='1870-01-01', end='2018-12-01', freq='MS')
-
-    df = pd.DataFrame(data=data.values,index=dti, columns=['anom'])
+    dti = pd.date_range(start='1870-01-01', end='2020-08-01', freq='MS')
+    
+    df = pd.DataFrame(data=data.values[:dti.shape[0]],index=dti, columns=['anom'])
     df.index.name = 'time'
 
     df.to_csv(join(processeddir, 'iod.csv'))

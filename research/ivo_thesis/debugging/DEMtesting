@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Nov 20 10:25:38 2020
+
+@author: ivo
+"""
+
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+
+from ninolearn.utils import include_time_lag
+from ninolearn.IO.read_processed import data_reader
+
+def pipeline(lead_time):
+    """
+    Data pipeline for the processing of the data before the Deep Ensemble
+    is trained.
+
+    :type lead_time: int
+    :param lead_time: The lead time in month.
+
+    :returns: The feature "X" (at observation time), the label "y" (at lead
+    time), the target season "timey" (least month)
+    """
+    reader = data_reader(startdate='1980-01', enddate='2018-12')
+
+    # indeces
+    oni = reader.read_csv('oni')
+    iod = reader.read_csv('iod')
+    wwv = reader.read_csv('wwv')
+
+    # seasonal cycle
+    sc = np.cos(np.arange(len(oni))/12*2*np.pi)
+
+    # network metrics
+    network_ssh = reader.read_statistic('network_metrics', variable='sst', dataset='ERSSTv5', processed="anom")
+    c2 = network_ssh['fraction_clusters_size_2']
+    H = network_ssh['corrected_hamming_distance']
+
+    # time lag
+    time_lag = 12
+
+    # shift such that lead time corresponds to the definition of lead time
+    shift = 3
+
+    # process features
+    feature_unscaled = np.stack((oni, sc, wwv, iod,
+                                 c2, H), axis=1)
+
+    # scale each feature
+    scalerX = StandardScaler()
+    Xorg = scalerX.fit_transform(feature_unscaled)
+
+    # set nans to 0.
+    Xorg = np.nan_to_num(Xorg)
+
+    # arange the feature array
+    X = Xorg[:-lead_time-shift,:]
+#     X = include_time_lag(X, max_lag=time_lag)
+    X = include_time_lag(X, n_lags =12) 
+
+
+    # arange label
+    yorg = oni.values
+    y = yorg[lead_time + time_lag + shift:]
+
+    # get the time axis of the label
+    timey = oni.index[lead_time + time_lag + shift:]
+
+    return X, y, timey
+
+########################
+
+import keras.backend as K
+from ninolearn.learn.models.dem import DEM
+
+# clear memory from previous sessions
+K.clear_session()
+
+# define the lead time
+lead_time = 3
+
+# get the features (X), the label (y) and 
+# the time axis of the label (timey)
+X, y, timey = pipeline(lead_time)
+
+# split the data set into 
+test_indeces = (timey>='2001-01-01') & (timey<='2018-12-01')
+train_val_indeces = np.invert(test_indeces)
+
+train_val_X, train_val_y, train_val_timey = X[train_val_indeces,:], y[train_val_indeces], timey[train_val_indeces]
+testX, testy, testtimey = X[test_indeces,:], y[test_indeces], timey[test_indeces]
+
+
+########################
+
+# initiated an instance of the DEM (Deep Ensemble Model) class
+model = DEM()
+
+# Set parameters
+model.set_hyperparameters(searchtype='linear', layers=1, neurons=16, dropout=[0.1, 0.5], noise_in=[0.1,0.5], noise_sigma=[0.1,0.5],
+                     noise_mu=[0.1,0.5], l1_hidden=[0.0, 0.2], l2_hidden=[0., 0.2],
+                     l1_mu=[0.0, 0.2], l2_mu=[0.0, 0.2], l1_sigma=[0.0, 0.2],
+                     l2_sigma=[0.0, 0.2], lr=[0.0001,0.01], batch_size=100, epochs=500, n_segments=5,
+                     n_members_segment=1, patience=30, verbose=0, pdf='normal', activation = 'relu')
+
+# Use a random search to find the optimal hyperparameters
+
+model.fit_RandomizedSearch(train_val_X, train_val_y, train_val_timey, n_iter=20)
+
+

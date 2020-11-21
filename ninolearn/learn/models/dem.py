@@ -141,6 +141,7 @@ class DEM(baseModel):
         """
         The method builds a new member of the ensemble and returns it.
         """
+        # print(self.hyperparameters['activation'])#IG
         # derived parameters
         self.hyperparameters['n_members'] = self.hyperparameters['n_segments'] * self.hyperparameters['n_members_segment']
 
@@ -247,6 +248,7 @@ class DEM(baseModel):
 
                 # validate on the spare segment
                 if self.hyperparameters['n_segments']!=1:
+
                     if valX is not None or valy is not None:
                         warnings.warn("Validation data set will be one of the segments. The provided validation data set is not used!")
 
@@ -260,7 +262,7 @@ class DEM(baseModel):
                     if False:
                         timeyens = np.delete(timey, np.s_[start_ind:end_ind])
 
-                        elninolike = (timeyens>=f'1982-01-01') & (timeyens<=f'2001-12-01')
+                        elninolike = (timeyens>='1982-01-01') & (timeyens<='2001-12-01')
                         laninalike = np.invert(elninolike)
 
 
@@ -294,12 +296,13 @@ class DEM(baseModel):
                     valXens = valX
                     valyens = valy
 
+                print(valXens.dtype, valyens)
                 history = ensemble_member.fit(trainXens, trainyens,
                                             epochs=self.hyperparameters['epochs'], batch_size=self.hyperparameters['batch_size'],
                                             verbose=self.hyperparameters['verbose'],
                                             shuffle=True, callbacks=[self.es],
                                             validation_data=(valXens, valyens))
-
+                
                 self.history.append(history)
                 self.val_loss.append(ensemble_member.evaluate(valXens, valyens)[1])
                 self.ensemble.append(ensemble_member)

@@ -28,7 +28,7 @@ decade_name = ['1963-1971', '1972-1981', '1982-1991', '1992-2001', '2002-2011', 
 def cross_training(model, pipeline, n_iter, **kwargs):
     """
     Training the model on different training sets in which each time a period\
-    corresponing to a decade out of 1962-1971, 1972-1981, ..., 2012-last \
+    corresponding to a decade out of 1962-1971, 1972-1981, ..., 2012-last \
     ovserved date is spared.
 
     :param model: A model that follows the guidelines how a model object\

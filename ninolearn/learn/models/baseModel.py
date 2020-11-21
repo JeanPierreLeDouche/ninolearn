@@ -8,7 +8,7 @@ class baseModel(object):
     inheritance, standardized training and testing will be possible.
 
     Errors will be raised if mandotory functions are not overwritten
-    by the child model. Mandetory functions are:
+    by the child model. Mandatory functions are:
 
         1. fit
         2. predict
@@ -18,7 +18,7 @@ class baseModel(object):
     def __init__(self):
         raise NameError("Function '__init__' is not defined")
 
-    def set_hyperparameters(self, **kwargs):
+    def set_hyperparameters(self, searchtype = 'linear', **kwargs):
         """
         Set the hyperparameters for the model that are provided as keyword
         arguments.
@@ -36,6 +36,7 @@ class baseModel(object):
             if type(self.hyperparameters[key]) is list:
                 if len(self.hyperparameters[key])>0:
                     self.hyperparameters_search[key] = self.hyperparameters[key].copy()
+                    self.hyperparameters_search[key].append(searchtype) # added by IG
 
 
     def fit_RandomizedSearch(self, trainX, trainy, timey, n_iter=10, **kwargs):
@@ -63,7 +64,7 @@ class baseModel(object):
             print(f"Search iteration Nr {i+1}/{n_iter}")
 
             # random selection of hyperparameters
-            for key in self.hyperparameters_search.keys():
+            for key in self.hyperparameters_search.keys():               
                 search_type = self.hyperparameters_search[key][2]
                 if search_type=='linear':
                     low = self.hyperparameters_search[key][0]
@@ -84,7 +85,6 @@ class baseModel(object):
                 elif search_type=='log':
                     low = self.hyperparameters_search[key][0]
                     high = self.hyperparameters_search[key][1]
-
                     choice_values = np.logspace(np.log10(low), np.log10(high), 100)
                     self.hyperparameters[key] = np.random.choice(choice_values)
 
