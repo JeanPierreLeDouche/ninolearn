@@ -109,4 +109,50 @@ model.set_hyperparameters(searchtype='linear', layers=1, neurons=16, dropout=[0.
 
 model.fit_RandomizedSearch(train_val_X, train_val_y, train_val_timey, n_iter=20)
 
+#######################
+#%%
 
+pred_mean, pred_std = model.predict(testX)
+
+
+######################3
+
+import matplotlib.pyplot as plt
+from ninolearn.plot.prediction import plot_prediction
+import pandas as pd
+
+plt.subplots(figsize=(15,3.5))
+plt.axhspan(-0.5,
+            -6,
+            facecolor='blue',
+            alpha=0.1,zorder=0)
+
+plt.axhspan(0.5,
+            6,
+            facecolor='red',
+            alpha=0.1,zorder=0)
+
+plt.xlim(testtimey[0], testtimey[-1])
+plt.ylim(-3,3)
+
+# plot the prediction
+plot_prediction(testtimey, pred_mean, std=pred_std, facecolor='royalblue', line_color='navy')
+
+# plot the observation
+plt.plot(timey, y, "k")
+
+plt.show()
+
+
+
+############################
+
+from ninolearn.plot.evaluation import plot_correlation
+
+loss = model.evaluate(testy, pred_mean, pred_std)
+print(f"Loss (Negative-Log-Likelihood): {loss}")
+
+# make a plot of the seasonal correaltion
+# note: - pd.tseries.offsets.MonthBegin(1) appears to ensure that the correlations are plotted
+# agains the correct season
+plot_correlation(testy, pred_mean, testtimey - pd.tseries.offsets.MonthBegin(1), title="")

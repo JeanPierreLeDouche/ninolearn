@@ -1,8 +1,3 @@
-name: ninolearn1
-channels:
-  - conda-forge
-  - defaults
-dependencies:
   - _libgcc_mutex=0.1
   - _tflow_select=2.3.0
   - absl-py=0.9.0
@@ -287,9 +282,9 @@ dependencies:
   - zipp=3.1.0
   - zlib=1.2.11
   - zstd=1.4.4
-  - pip:
+
     - pyqt5-sip==4.19.18
     - pyqtchart==5.12
     - pyqtwebengine==5.12.1
-prefix: /home/paul/miniconda3/envs/ninolearn
+
 

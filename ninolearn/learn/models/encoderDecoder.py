@@ -137,7 +137,7 @@ class EncoderDecoder(object):
 
         # initialize optimizer and early stopping
         self.optimizer = Adam(lr=self.hyperparameters['lr'], beta_1=0.9, beta_2=0.999, epsilon=None, decay=0., amsgrad=False)
-        self.es = EarlyStopping(monitor=f'val_mean_squared_error', min_delta=0.0, patience=self.patience, verbose=1,
+        self.es = EarlyStopping(monitor=f'val_mse', min_delta=0.0, patience=self.patience, verbose=1,
                    mode='min', restore_best_weights=True)
 
         inputs = Input(shape=(n_features,))

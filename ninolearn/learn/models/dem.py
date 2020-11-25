@@ -296,7 +296,6 @@ class DEM(baseModel):
                     valXens = valX
                     valyens = valy
 
-                print(valXens.dtype, valyens)
                 history = ensemble_member.fit(trainXens, trainyens,
                                             epochs=self.hyperparameters['epochs'], batch_size=self.hyperparameters['batch_size'],
                                             verbose=self.hyperparameters['verbose'],
