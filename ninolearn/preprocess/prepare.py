@@ -88,6 +88,25 @@ def prep_oni():
     data = data.rename(index=str, columns={'ANOM': 'anom'})
     data.to_csv(join(processeddir, f'oni.csv'))
 
+#def prep_oni_full():
+#    """
+#    Add a time axis corresponding to the first day of the central month of a
+#    3-month season. For example: DJF 2019 becomes 2019-01-01. Further, rename
+#    some axis.
+#    """
+#    print("Prepare ONI timeseries.")
+#    data = read_raw.oni()
+#
+#    df = ({'year': data.YR.values + data.SEAS.apply(season_shift_year).values,
+#           'month': data.SEAS.apply(season_to_month).values,
+#           'day': data.YR.values/data.YR.values})
+#    dti = pd.to_datetime(df)
+#
+#    data.index = dti
+#    data.index.name = 'time'
+#    data = data.rename(index=str, columns={'ANOM': 'anom', 'TOTAL': 'total'})
+#    data.to_csv(join(processeddir, f'oni_full.csv'))
+
 def prep_nino_month(index="3.4", detrend=False):
     """
     Add a time axis corresponding to the first day of the central month.

@@ -22,11 +22,12 @@ def _get_period(data):
     """
     Returns the period of the data set. Either day or month.
     """
-    max_period_days = pd.to_timedelta(data.time.diff('time', n=1)).max().days
+    # max_period_days = pd.to_timedelta(data.time.diff('time', n=1)).max().days
+    max_period_days = data.time.diff(1).max().days #IG
 
     if max_period_days == 1:
         period = 'dayofyear'
-    elif max_period_days >= 28 and max_period_days <= 31:
+    elif max_period_days >= 28 and max_period_days <= 31.5: # +.5 added by IG
         period = 'month'
     else:
         raise Exception("Time period not in usual periods")
@@ -36,13 +37,14 @@ def _get_period(data):
 def computeMeanClimatology(data):
     """
     Monthly means
+    NOTE: This seems to only work with .nc data as input #IG     
     """
     filename = generateFileName(data.name, dataset=data.dataset,
                                 processed='meanclim', suffix='nc')
     path = join(processeddir, filename)
 
     if not exists(path):
-        print(f"- Compute {data.name} climatetology")
+        print(f"- Compute {data.name} climatology")
         period = _get_period(data)
         print(f"- Data has {period} period")
 

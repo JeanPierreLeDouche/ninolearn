@@ -17,6 +17,13 @@ def nino34_anom():
     data = pd.read_csv(join(rawdir, "nino34.txt"), delim_whitespace=True)
     return data
 
+def nino34detrend_anom():
+    """
+    Get the detrended Nino3.4 Index anomaly.
+    """
+    data = pd.read_csv(join(rawdir, "nino34detrend.txt"), delim_whitespace=True)
+    return data
+
 def oni():
     return nino_anom(index="3.4", period ="S")
 
