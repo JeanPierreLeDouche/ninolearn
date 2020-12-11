@@ -88,25 +88,6 @@ def prep_oni():
     data = data.rename(index=str, columns={'ANOM': 'anom'})
     data.to_csv(join(processeddir, f'oni.csv'))
 
-#def prep_oni_full():
-#    """
-#    Add a time axis corresponding to the first day of the central month of a
-#    3-month season. For example: DJF 2019 becomes 2019-01-01. Further, rename
-#    some axis.
-#    """
-#    print("Prepare ONI timeseries.")
-#    data = read_raw.oni()
-#
-#    df = ({'year': data.YR.values + data.SEAS.apply(season_shift_year).values,
-#           'month': data.SEAS.apply(season_to_month).values,
-#           'day': data.YR.values/data.YR.values})
-#    dti = pd.to_datetime(df)
-#
-#    data.index = dti
-#    data.index.name = 'time'
-#    data = data.rename(index=str, columns={'ANOM': 'anom', 'TOTAL': 'total'})
-#    data.to_csv(join(processeddir, f'oni_full.csv'))
-
 def prep_nino_month(index="3.4", detrend=False):
     """
     Add a time axis corresponding to the first day of the central month.
@@ -310,3 +291,39 @@ def prep_other_forecasts():
 
     # save data
     ds.to_netcdf(join(processeddir, f'other_forecasts.nc'))
+
+def prep_ZConi( filename = 'ZC_SST_undistorted'):
+    """ 
+    calculates ONI from prepared ZC SST data 
+    """    
+    suffix = '.nc'
+
+    data = xr.open_dataset(join(processeddir, 'ZC/' + filename + suffix))
+    SST = data['temperature']
+
+    # caclulate mean temp in NIN34 box from SST field to get timeseries
+    SST_NIN34_mly = np.mean( np.mean(SST.loc[:, -5:5, -170:-120], axis = 2), axis = 1).to_dataframe()
+
+    ### calculate 30 yr climatology (1960-1990)
+
+    data_clim = SST_NIN34_mly.loc['1960-01-01':'1990-01-01']
+    months = range(1, 13) # Januari is 1, December is 12
+
+    climatology = np.zeros(13) # indexes match months so month 0 is empty
+    for month in months:
+        month_data_clim = data_clim[data_clim.index.month == month]
+        avg = np.mean(month_data_clim)
+        climatology[month] = avg
+        
+    anomalies = pd.DataFrame(np.zeros(SST_NIN34_mly.shape), index = SST_NIN34_mly.index, columns=['anomaly'])
+
+    ### calculate anomalies
+    for month in months:
+        SST_month = SST_NIN34_mly[SST_NIN34_mly.index.month == month]
+        anom = SST_month - climatology[month]
+        anomalies.loc[SST_month.index] = anom
+
+    SST_NIN34_mly['anomaly'] = anomalies
+    ONI = SST_NIN34_mly['anomaly'].rolling(window=3, center = True).mean().dropna()
+
+    ONI.to_csv(join(processeddir, 'ONI_' + filename + '.csv'))

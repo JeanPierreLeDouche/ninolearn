@@ -6,6 +6,7 @@ to which they belong. Help them find there home!
 import numpy as np
 from scipy.stats import spearmanr, pearsonr
 import math
+import pylab as pl
 
 def print_header(string):
     print()
@@ -250,4 +251,26 @@ def find_lat_from_dist(lon, lat, distance):
     frac = distance/onedegreelat
     newlat = lat + frac 
     return lon, newlat
+
+
+def threshold_plot(x, y, th_lo, th_hi, fmt_lo, fmt_mi, fmt_hi):
+    idx = np.where(np.diff(y > th))[0]
+    x_insert = x[idx] + (th - y[idx]) / (y[idx+1] - y[idx]) * (x[idx+1] - x[idx])
+    y_insert = np.full_like(x_insert, th)
+
+    xn, yn = np.insert(x, idx+1, x_insert), np.insert(y, idx+1, y_insert)
+
+    mask = yn > th_hi
+    pl.plot(np.ma.masked_where(mask, xn), np.ma.masked_where(mask, yn), fmt_hi, lw=2)
+
+    mask = np.logical_and(th_lo < yn, yn < th_hi)
+    pl.plot(np.ma.masked_where(mask, xn), np.ma.masked_where(mask, yn), fmt_mi)
+    
+    mask = yn < th_lo  
+    pl.plot(np.ma.masked_where(mask, xn), np.ma.masked_where(mask, yn), fmt_lo, lw=2)  
+
+    pl.axhline(th_lo, color="black", linestyle="--")
+    pl.axhline(th_hi, color="black", linestyle="--")
+
+
 
