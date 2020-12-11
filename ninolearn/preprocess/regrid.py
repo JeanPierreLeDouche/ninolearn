@@ -23,3 +23,23 @@ def to2_5x2_5(data):
     regrid_data = regridder(data)
     regrid_data.attrs = data.attrs
     return regrid_data
+
+def to2_5x2_5_ZC(data):
+    """
+    Regrids data the 2.5x2.5 from the NCEP reanalysis data set.
+
+    :param data: An xarray dataArray or DataSet with with dimensions named\
+    'lat' and 'lon'.
+
+    """
+    ds_out = xr.Dataset({'lat': (['lat'], np.arange(-19, 20.01, 2.5)),
+                     'lon': (['lon'], np.concatenate((np.arange(124,181, 1), np.arange(-179,-79,1),))),
+                    }
+                   )
+
+    regridder = xe.Regridder(data, ds_out, 'bilinear')
+    regrid_data = regridder(data)
+    regrid_data.attrs = data.attrs
+    return regrid_data
+
+

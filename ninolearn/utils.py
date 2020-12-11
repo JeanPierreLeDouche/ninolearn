@@ -5,6 +5,7 @@ to which they belong. Help them find there home!
 
 import numpy as np
 from scipy.stats import spearmanr, pearsonr
+import math
 
 def print_header(string):
     print()
@@ -179,4 +180,74 @@ def pearson_lag(x, y, max_lags=28):
          r[i], p[i] =  pearsonr(x[i:], y[:-i])
     return r, p
 
+def find_index(array, element):
+    """
+    Finds index belonging to element in array, duplicates not supported
+    """ 
+    for i in np.arange(0, array.shape[0]):
+        if array[i] ==  element:
+            index = i
+    return index
+
+def find_indexes_from_latlon(lats, lons, lon_right, lat_top, lon_left, lat_bot):
+    """
+    NOTE: this method is entirely redundant if you know how to use the .loc method of pandas
+
+    Takes lats an lons arrays (in whatever convention) and returns indices belonging to 
+    sides of a box around the coordinates specified as arguments
+    """    
+
+    indexes = [0, 0, 0, 0]
+    for i in range(0, lats.shape[0]):
+        if lats[i] == lat_bot:
+            indexes[3] = i
+        elif lats[i] == lat_top:
+            indexes[1] = i            
+    for j in range(0, lons.shape[0]):
+        if lons[j] == lon_left:
+            indexes[2] = j
+        elif lons[j] == lon_right:
+            indexes[0] = j
+    # first index: right bound, second index: top bound, third index: left bound, fourth index: bottom bound
+    # (indices anti-clockwise around the rectangle starting on the right side    
+    return indexes 
+
+def find_distance(lat1, lat2, lon1, lon2):
+    """
+    Input two coordinates (lat1, lon1), (lat2, lon2) and find the distance between them 
+    on a spherical earth
+    """
+    r = 6371 * 1e3
+    d = 2*r * np.arcsin(np.sqrt(np.sin(math.radians(lat2-lat1))**2 + np.cos(math.radians(lat1))*np.cos(math.radians(lat2))*np.sin((math.radians(lon2-lon1))/2)**2))
+    print('distance = {d*1e-3} m' )
+    return d
+
+def find_lon_from_dist(lon, lat, distance):
+    """
+    Calculates a longitude found by moving a certain distance among a line
+    of equal latitude 
+    """    
+    r_e = 6371 * 1e3 # m # radius of the earth
+
+    # defined moving easttward
+    onedegreelon = 2 * np.pi * r_e * np.cos(math.radians(lat)) / 360
+    frac = distance/onedegreelon
+    newlon = lon + frac
+    if newlon > 180:
+        newlon -= 360
+    return newlon, lat
+
+def find_lat_from_dist(lon, lat, distance):
+    """
+    Calculates a latitude found by moving a certain distance among a line
+    of equal longitude 
+    """
+    r_e = 6371 * 1e3 # m # radius of the earth
+    
+    # defined moving northward
+    onedegreelat = 2 * np.pi * r_e / 360
+
+    frac = distance/onedegreelat
+    newlat = lat + frac 
+    return lon, newlat
 
