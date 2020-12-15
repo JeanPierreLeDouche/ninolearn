@@ -58,7 +58,7 @@ SST_NIN34_mly['anomaly'] = anomalies
 ONI = SST_NIN34_mly['anomaly'].rolling(window=3, center = True).mean().dropna()
 
 ONI.to_csv(join(processeddir, 'ONI_' + filename + '.csv'))
-
+SST_NIN34_mly.to_csv(join(processeddir, 'SST_NIN34_anomaly' + filename + suffix))
 
 ### plot ONI (sloppy implementation)
 

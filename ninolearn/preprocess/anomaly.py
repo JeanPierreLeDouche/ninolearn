@@ -22,8 +22,8 @@ def _get_period(data):
     """
     Returns the period of the data set. Either day or month.
     """
-    # max_period_days = pd.to_timedelta(data.time.diff('time', n=1)).max().days
-    max_period_days = data.time.diff(1).max().days #IG
+    max_period_days = pd.to_timedelta(data.time.diff('time', n=1)).max().days
+    # max_period_days = data.time.diff(1).max().days #IG
 
     if max_period_days == 1:
         period = 'dayofyear'
@@ -34,10 +34,11 @@ def _get_period(data):
     return period
 
 
-def computeMeanClimatology(data):
+def computeMeanClimatology(data, reference_period = False):
     """
     Monthly means
-    NOTE: This seems to only work with .nc data as input #IG     
+    NOTE: data must be provide as xr.Dataset with (variable) 'name' and 'dataset' 
+    attributes specified 
     """
     filename = generateFileName(data.name, dataset=data.dataset,
                                 processed='meanclim', suffix='nc')

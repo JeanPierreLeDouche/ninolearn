@@ -19,6 +19,7 @@ TODO:
 
 import xarray as xr
 import pandas as pd
+import numpy as np
 
 from ninolearn.pathes import processeddir, rawdir
 from ninolearn.preprocess.regrid import to2_5x2_5_ZC
@@ -26,22 +27,31 @@ from ninolearn.preprocess.network import networkMetricsSeries
 
 from os.path import join
 
-data = xr.open_dataset(join(processeddir, 'ZC/ZC_SST_undistorted.nc'))
+data = xr.open_dataset(join(processeddir, 'sst_ZC_undistorted_anom.nc'))
 data25x25 = to2_5x2_5_ZC(data)
+data25x25.to_netcdf(join(processeddir, 'sst_ZC_25x25_undistorted_anom.nc'))    
 
+lons = data25x25.lon
+newlon = np.zeros(lons.shape[0])
+for i in range(lons.shape[0]):
+    if lons[i] < 0: 
+        new = lons[i] + 360
+        newlon[i] = new
+    else:
+        newlon[i] = lons[i]
 
-##### FROM PP: 
-    
+### TODO: consider changing to lon [0:360] coordinate system in preprocessing
 
-# # settings for the computation of the network metrics time series
-# # TODO: this should instead use the artificial SST timeseries
-# nms = networkMetricsSeries('sst', 'ERSSTv5', processed="anom",
-#                            threshold=0.97, startyear=1949, endyear=2018,
-#                            window_size=12, lon_min=120, lon_max=280,
-#                            lat_min=-30, lat_max=30, verbose=2)
+#%%
 
-# # compute the time series
-# nms.computeTimeSeries()
+# settings for the computation of the network metrics time series
+nms = networkMetricsSeries('sst', 'ZC_25x25_undistorted', processed="anom",
+                            threshold=0.97, startyear=1951, endyear=1994,
+                            window_size=12, lon_min=124, lon_max=-80,
+                            lat_min=-19, lat_max=19, verbose=2)
 
-# # save the time series again with a name following the naming convention
-# nms.save()
+# compute the time series
+nms.computeTimeSeries()
+
+# save the time series again with a name following the naming convention
+nms.save()

@@ -14,6 +14,7 @@ import xesmf as xe
 
 from ninolearn.pathes import processeddir, rawdir
 from ninolearn.utils import find_lat_from_dist, find_lon_from_dist
+from ninolearn.preprocess.anomaly import computeMeanClimatology, computeAnomaly
 
 r_e = 6371 * 1e3 # m # radius of the earth
 
@@ -91,11 +92,25 @@ ds_out = xr.Dataset({'lat': (['lat'], np.arange(-19, 20, 1)),
                      'lon': (['lon'], np.concatenate((np.arange(124,181, 1), np.arange(-179,-79,1),))),   })
 
 regridder = xe.Regridder(ds_int, ds_out, 'bilinear') # from long decimal number latlon to 1x1
+
 ds_new = regridder(ds_int)
 ds_new = ds_new.dropna(dim = 'time') # first value cannot be interpolated because there is no lower bound, remove this
  
-ZC_T_grid = ds_new['temperature']
-ZC_h_grid = ds_new['thermocline_height']
+sst = ds_new.drop_vars(['thermocline_height'])
+h = ds_new.drop_vars(['temperature'])
 
-ZC_T_grid.to_netcdf(join(processeddir, f'ZC/ZC_SST_{version}.nc'))
-ZC_h_grid.to_netcdf(join(processeddir, f'ZC/ZC_h_{version}.nc'))
+sst.to_netcdf(join(processeddir, f'sst_ZC_{version}.nc')) # should check if this still works after changing code above
+h.to_netcdf(join(processeddir, f'h_ZC_{version}.nc')) # should check if this still works after changing code above
+
+### also calculate anomalys grid
+# TO DO: make pauls code work with my data or write my own functions for climatology and such
+sst = sst.assign_attrs(name = 'sst')
+sst = sst.assign_attrs(dataset = 'ZC_'+version)
+
+sst_anom = computeAnomaly(sst)
+sst_anom.to_netcdf(join(processeddir, f'sst_ZC_{version}_anom.nc')) # should check if this still works after changing code above
+
+sst['anomaly'] = sst_anom['temperature']
+
+sst.to_netcdf(join(processeddir, f'sst_ZC_{version}_full.nc')) # should check if this still works after changing code above
+
