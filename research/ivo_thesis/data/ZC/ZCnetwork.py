@@ -25,20 +25,24 @@ from ninolearn.pathes import processeddir, rawdir
 from ninolearn.preprocess.regrid import to2_5x2_5_ZC
 from ninolearn.preprocess.network import networkMetricsSeries
 
+from ninolearn.IO import read_raw
+from ninolearn.preprocess.anomaly import postprocess
+from ninolearn.preprocess.regrid import to2_5x2_5
+
+
 from os.path import join
 
 data = xr.open_dataset(join(processeddir, 'sst_ZC_undistorted_anom.nc'))
-data25x25 = to2_5x2_5_ZC(data)
+data25x25 = to2_5x2_5_ZC(data)['temperature']
+
+
 data25x25.to_netcdf(join(processeddir, 'sst_ZC_25x25_undistorted_anom.nc'))    
 
-lons = data25x25.lon
-newlon = np.zeros(lons.shape[0])
-for i in range(lons.shape[0]):
-    if lons[i] < 0: 
-        new = lons[i] + 360
-        newlon[i] = new
-    else:
-        newlon[i] = lons[i]
+
+
+sst_ERSSTv5 = read_raw.sst_ERSSTv5()
+sst_ERSSTv5_regrid = to2_5x2_5(sst_ERSSTv5)
+postprocess(sst_ERSSTv5_regrid, new=True)
 
 ### TODO: consider changing to lon [0:360] coordinate system in preprocessing
 
