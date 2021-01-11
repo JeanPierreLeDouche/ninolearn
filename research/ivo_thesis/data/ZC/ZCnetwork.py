@@ -34,9 +34,11 @@ from ninolearn.IO.read_processed import data_reader
 
 from os.path import join
 
+
+version = 'undistorted'
 ### opening datasets and processing them 
 
-data = xr.open_dataset(join(processeddir, 'sst_ZC_undistorted_anom.nc'))
+data = xr.open_dataset(join(processeddir, ('sst_ZC_' + version +'.nc')))
 
 data25x25 = to2_5x2_5_ZC(data)['temperature']
 data25x25 = data25x25.rename('sstAnom')
