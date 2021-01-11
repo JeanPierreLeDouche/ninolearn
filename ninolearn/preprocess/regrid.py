@@ -33,7 +33,7 @@ def to2_5x2_5_ZC(data):
 
     """
     ds_out = xr.Dataset({'lat': (['lat'], np.arange(-19, 20.01, 2.5)),
-                     'lon': (['lon'], np.concatenate((np.arange(124,181, 1), np.arange(-179,-79,1),))),
+                     'lon': (['lon'],     np.arange(124,281, 1)),
                     }
                    )
 

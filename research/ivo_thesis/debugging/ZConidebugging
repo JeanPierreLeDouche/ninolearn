@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Dec 24 12:12:51 2020
+
+@author: ivo
+"""
+
+from os.path import join
+import xarray as xr
+import pandas as pd
+import numpy as np
+import xesmf as xe
+
+from ninolearn.pathes import processeddir, rawdir
+from ninolearn.utils import find_lat_from_dist, find_lon_from_dist
+from ninolearn.preprocess.anomaly import computeMeanClimatology, computeAnomaly
+
+"""
+calculates oni using climatology from 1960 to 1990. This code is redundant 
+and can be replaced by using PP's computeAnomaly function I think
+TODO: see if this can be replaced
+
+"""
+version = 'undistorted'
+NIN34 = False
+
+if version == 'default': print('must specify version!')
+
+inputfilename = 'sst_ZC_'+ version + '.nc'
+data = xr.open_dataset(join(processeddir, inputfilename))
+data = data.drop_vars('month')
+SST = data['temperature']
+
+# caclulate mean temp in NIN34 box from SST field to get timeseries
+SST_NIN34_mly = np.mean( np.mean(SST.loc[:, -5:5, -170:-120], axis = 2), axis = 1).to_dataframe()
+
+### calculate 30 yr climatology (1960-1990)
+
+data_clim = SST_NIN34_mly.loc['1960-01-01':'1990-01-01']
+months = range(1, 13) # Januari is 1, December is 12
+
+climatology = np.zeros(13) # indexes match months so month 0 is empty
+for month in months:
+    month_data_clim = data_clim[data_clim.index.month == month]
+    avg = np.mean(month_data_clim)
+    climatology[month] = avg
+    
+anomalies = pd.DataFrame(np.zeros(SST_NIN34_mly.shape), index = SST_NIN34_mly.index, columns=['anomaly'])
+
+### calculate anomalies
+for month in months:
+    SST_month = SST_NIN34_mly[SST_NIN34_mly.index.month == month]
+    anom = SST_month - climatology[month]
+    anomalies.loc[SST_month.index] = anom
+
+SST_NIN34_mly['anom'] = anomalies
+ONI = SST_NIN34_mly['anom'].rolling(window=3, center = True).mean().dropna()
+df_ONI = pd.DataFrame(ONI, index = np.asarray(ONI.index))
+df_ONI.index.names = ['time']
+
+df_ONI.to_csv(join(processeddir, 'oni_ZC_' + version + '.csv'))
+
+if NIN34 == True:
+    SST_NIN34_mly.to_csv(join(processeddir, 'nin34' + version + '.csv')) 
+
+

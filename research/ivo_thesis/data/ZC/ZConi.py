@@ -21,10 +21,13 @@ import numpy as np
 import numpy.ma as ma 
 
 from ninolearn.pathes import processeddir
+from ninolearn.IO.read_processed import data_reader
+
 
 from os.path import join
 
 makeplot = False
+comparisonplot = False
 
 filename = 'ZC_SST_undistorted'
 suffix = '.nc'
@@ -54,13 +57,24 @@ for month in months:
     anom = SST_month - climatology[month]
     anomalies.loc[SST_month.index] = anom
 
-SST_NIN34_mly['anomaly'] = anomalies
-ONI = SST_NIN34_mly['anomaly'].rolling(window=3, center = True).mean().dropna()
+SST_NIN34_mly['anom'] = anomalies
+ONI = SST_NIN34_mly['anom'].rolling(window=3, center = True).mean().dropna()
+df_ONI = pd.DataFrame(ONI, index = np.asarray(ONI.index))
+df_ONI.index.names = ['time']
 
-ONI.to_csv(join(processeddir, 'ONI_' + filename + '.csv'))
+df_ONI.to_csv(join(processeddir, 'ZC_oni.csv'))
 SST_NIN34_mly.to_csv(join(processeddir, 'SST_NIN34_anomaly' + filename + suffix))
 
+
+
+##############################################################################
+
+
+
+
 ### plot ONI (sloppy implementation)
+reader = data_reader(startdate='1950-02', enddate='2018-12')
+oni_ERSSTv5 = reader.read_csv('oni')
 
 plt.plot(ONI.index , ONI, color = 'black')
 
@@ -70,11 +84,13 @@ plt.plot(ONI.index , ma1, color = 'red')
 ma2 = ma.masked_array(ONI, np.logical_not((ONI < -0.5)))
 plt.plot(ONI.index , ma2, color = 'blue')
 
-plt.hlines([-0.5,0.5], xmin = ONI.index[0], xmax = ONI.index[-1], ls ='--')
+plt.hlines([-0.5,0.5], xmin = ONI.index[0], xmax = ONI.index[-1], ls ='-.')
 plt.xlim([ONI.index[0], ONI.index[-1]])
 
 ma3 = ma.masked_array(ONI, np.logical_not( np.logical_and(-0.5 < ONI, ONI < 0.5)))       
 plt.plot(ONI.index , ma3, color = 'black')
+
+# plt.plot(oni_ERSSTv5.index, oni_ERSSTv5, color = 'g', ls = '--')
 
 plt.ylabel('ONI')
 plt.xlabel('ZC model time (arbitrary) [years]')
@@ -82,3 +98,18 @@ plt.savefig(join('/home/ivo/Documents/GitHub/ninolearn/research/ivo_thesis/plots
 
 if makeplot == True:
     plt.show()
+
+if comparisonplot is True:
+    plt.plot(ONI.index , ONI, color = 'black', label = 'ZC')
+    plt.plot(oni_ERSSTv5.index, oni_ERSSTv5, color = 'g', ls = '--', label = 'ERSSTv5')
+    plt.legend()
+    plt.ylabel('ONI')
+    plt.xlabel('time [years]')
+    
+    plt.show()
+    plt.savefig(join('/home/ivo/Documents/GitHub/ninolearn/research/ivo_thesis/plots/', 'oni_comparison' + filename))
+
+
+    
+    
+    

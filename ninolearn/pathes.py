@@ -6,6 +6,7 @@ you public repository
 """
 
 from os.path import join
+from ninolearn.private import plotdir
 
 try:
     from ninolearn.private import datadir
@@ -18,7 +19,9 @@ except ImportError:
     raise ImportError("Cannot import name 'basedir'. Specifiy the path to the root directory of ninolearn")
 
 
+plotdir = plotdir
 rawdir = join(datadir, 'raw')
 processeddir = join(datadir, 'processed')
 modeldir = join(datadir, 'model')
 ed_model_dir = join(datadir, 'ED_model')
+

@@ -1,5 +1,5 @@
 """
-This module contains a bunch of mehtods to compute seasonal anomalies.
+This module contains a bunch of methods to compute seasonal anomalies.
 
 Currently the reference period is 1981-2010.
 """
@@ -38,7 +38,7 @@ def computeMeanClimatology(data, reference_period = False):
     """
     Monthly means
     NOTE: data must be provide as xr.Dataset with (variable) 'name' and 'dataset' 
-    attributes specified 
+    attributes specified using .assign_attrs() method
     """
     filename = generateFileName(data.name, dataset=data.dataset,
                                 processed='meanclim', suffix='nc')

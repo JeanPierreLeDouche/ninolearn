@@ -22,13 +22,13 @@ r_e = 6371 * 1e3 # m # radius of the earth
 ####################### specify version !: ##################################
 ###--------------------------------------------------------------------------
 
-version = 'undistorted'
+version = 'TESTING'
 
 #
 #
 #
 
-data = pd.read_csv(join(rawdir,  f'ZCraw_44yrs_{version}'), index_col=0)
+data = pd.read_csv(join(rawdir,  'ZCraw_44yrs_undistorted'), index_col=0)
 data['time'] = pd.to_datetime(data['time'], unit = 's') + pd.DateOffset(years = -20)    
 
 yvals, xvals, tvals = np.unique(data['y']), np.unique(data['x']), np.unique(data['time'])
@@ -89,7 +89,7 @@ ds_int = ds.interp(time=pd.period_range('1/1/1950', '1/11/1994', freq= 'M').to_t
 ds_int = ds_int.transpose()
 
 ds_out = xr.Dataset({'lat': (['lat'], np.arange(-19, 20, 1)),
-                     'lon': (['lon'], np.concatenate((np.arange(124,181, 1), np.arange(-179,-79,1),))),   })
+                     'lon': (['lon'], np.concatenate((np.arange(124, 181, 1), np.arange(-179,-79,1),))),   })
 
 regridder = xe.Regridder(ds_int, ds_out, 'bilinear') # from long decimal number latlon to 1x1
 
@@ -103,14 +103,18 @@ sst.to_netcdf(join(processeddir, f'sst_ZC_{version}.nc')) # should check if this
 h.to_netcdf(join(processeddir, f'h_ZC_{version}.nc')) # should check if this still works after changing code above
 
 ### also calculate anomalys grid
-# TO DO: make pauls code work with my data or write my own functions for climatology and such
 sst = sst.assign_attrs(name = 'sst')
 sst = sst.assign_attrs(dataset = 'ZC_'+version)
-
 sst_anom = computeAnomaly(sst)
-sst_anom.to_netcdf(join(processeddir, f'sst_ZC_{version}_anom.nc')) # should check if this still works after changing code above
+
+ds_out = xr.Dataset({'lat': (['lat'], np.arange(-19, 20, 1)),
+                      'lon': (['lon'], np.arange(124, 281, 1)), })
+                    
+regridder = xe.Regridder(sst_anom, ds_out, 'bilinear') # from long decimal number latlon to 1x1
+
+sst_anom = regridder(sst_anom)                    
+sst_anom.to_netcdf(join(processeddir, f'sst_ZC_{version}_anom.nc')) #! {[{NMS}]} !# # should check if this still works after changing code above
 
 sst['anomaly'] = sst_anom['temperature']
-
 sst.to_netcdf(join(processeddir, f'sst_ZC_{version}_full.nc')) # should check if this still works after changing code above
 
