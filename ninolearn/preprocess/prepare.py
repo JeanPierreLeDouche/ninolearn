@@ -14,6 +14,9 @@ from ninolearn.IO import read_raw
 from ninolearn.pathes import processeddir
 from ninolearn.IO.read_processed import data_reader
 
+from ninolearn.preprocess.network import networkMetricsSeries
+from ninolearn.preprocess.regrid import to2_5x2_5_ZC
+
 
 if not exists(processeddir):
     print("make a data directory at %s" % processeddir)
@@ -328,30 +331,25 @@ def prep_ZConi( filename = 'ZC_SST_undistorted'):
 
     ONI.to_csv(join(processeddir, 'ONI_' + filename + '.csv'))
 
-from ninolearn.preprocess.network import networkMetricsSeries
-from ninolearn.preprocess.regrid import to2_5x2_5_ZC
-
-def prep_nms(version = 'default'):
-    if version == 'default': print('must specify version !' )
+def prep_nms(version = 'default', threshold_corr = 0.97, tstart = 1951, tend = 1981):
     """
     calculates network metrics from ZC sst data
-
-    """    
-
+    
+    """        
     data = xr.open_dataset(join(processeddir, ('sst_ZC_' + version +'.nc')))
-
+    
     data25x25 = to2_5x2_5_ZC(data)['temperature']
     data25x25 = data25x25.rename('sstAnom')
     data25x25 = data25x25.transpose()
-
+    
     data25x25.to_netcdf(join(processeddir, 'sst_ZC_25x25_' + version + '_anom.nc'))   
-
+    
     # settings for the computation of the network metrics time series
-    nms = networkMetricsSeries('sst', 'ZC_25x25_undistorted', processed="anom",
-                                threshold=0.97, startyear=1951, endyear=1993,
+    nms = networkMetricsSeries('sst', ('ZC_25x25_'+version), processed="anom",
+                                threshold=threshold_corr, startyear=tstart, endyear=(tend - pd.Timedelta(365, 'D')), # resolves end of year issue
                                 window_size=12, lon_min=124, lon_max=280,
                                 lat_min=-19, lat_max=19, verbose=2)
-
+    
     nms.computeTimeSeries()
     nms.save()    
 

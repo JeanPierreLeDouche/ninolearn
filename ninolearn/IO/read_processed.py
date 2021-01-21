@@ -66,20 +66,20 @@ class data_reader(object):
         data = xr.open_dataarray(join(processeddir, filename), chunks=chunks)
 
         regrided = ['GODAS', 'ERSSTv5', 'ORAS4', 'NODC', 'NCAR']
-        ZCdatasets = [ 'ZC_25x25_undistorted']
+        ZCdatasets = [ 'ZC_25x25_undistorted', 'ZC_']
 
         if processed=='meanclim':
             return data
 
         else:
             self._check_dates(data, f'{filename[:-3]}')
-            if dataset not in regrided  and dataset!='ORAP5' and  dataset != 'GFDL-CM3' and dataset not in ZCdatasets:
+            if dataset not in regrided  and dataset!='ORAP5' and  dataset != 'GFDL-CM3' and dataset not in ZCdatasets and not dataset[0:2] == 'ZC':
                 return data.loc[self.startdate:self.enddate,
                                 self.lat_max:self.lat_min,
                                 self.lon_min:self.lon_max]
 
-            elif dataset not in regrided  and dataset!='ORAP5' and  dataset != 'GFDL-CM3' and dataset in ZCdatasets:
-                print('Reading ZC model data') 
+            elif dataset not in regrided  and dataset!='ORAP5' and  dataset != 'GFDL-CM3' and dataset in ZCdatasets or dataset[0:2] == 'ZC':
+                # print('Reading ZC model data') 
                 # NOTE: the order of arguments to the .loc method is essential!
                 return data.loc[self.lon_min:self.lon_max,
                                 self.lat_min:self.lat_max,

@@ -5,6 +5,12 @@ from scipy.io import loadmat
 
 from ninolearn.pathes import rawdir
 
+import numpy as np
+from ninolearn.utils import find_lat_from_dist, find_lon_from_dist
+import xesmf as xe
+from ninolearn.pathes import processeddir
+from ninolearn.preprocess.anomaly import computeAnomaly
+
 """
 This module collects a bunch methods to read the raw data files.
 """
@@ -242,19 +248,11 @@ def hca_mon():
     data_upsampled.name = 'hca'
     return data_upsampled
 
-
 def other_forecasts():
     data = pd.read_csv(join(rawdir, "other_forecasts.csv"), error_bad_lines=False,
                        header=None, names=['row'], delimiter=';')
 
     return data
-
-import numpy as np
-from ninolearn.utils import find_lat_from_dist, find_lon_from_dist
-import xesmf as xe
-from ninolearn.pathes import processeddir, rawdir
-from ninolearn.preprocess.anomaly import computeMeanClimatology, computeAnomaly
-
 
 def ZC_raw(version = 'default'):
 
@@ -267,7 +265,8 @@ def ZC_raw(version = 'default'):
     if version == 'default': print('must specify version!')
     
     path = join(rawdir ,('fort.149_' + version))
-    data = pd.read_csv(path, index_col=0)
+    headers = ['time' , 'x' ,'y' , 'h' , 'T' ,'u_A' ,'T_0' ,'wind' ,'tau_x']
+    data = pd.read_csv(path, sep = '\s+', names = headers)
     data['time'] = pd.to_datetime(data['time'], unit = 's') + pd.DateOffset(years = -20)    
     
     yvals = np.unique(data['y'])
@@ -420,7 +419,12 @@ def ZC_oni(version = 'default', NIN34=False):
     if NIN34 == True:
         SST_NIN34_mly.to_csv(join(processeddir, 'nin34' + version + '.csv')) 
     
-
+def ZC_simple_read(version):
+    path = join(rawdir ,('fort.149_' + version))
+    headers = ['time' , 'x' ,'y' , 'h' , 'T' ,'u_A' ,'T_0' ,'wind' ,'tau_x']
+    data = pd.read_csv(path, sep = '\s+', names = headers)
+    data['time'] = pd.to_datetime(data['time'], unit = 's') + pd.DateOffset(years = -20)    
+    return data
     
 
     
