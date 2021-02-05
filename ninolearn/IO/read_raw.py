@@ -267,7 +267,9 @@ def ZC_raw(version = 'default'):
     path = join(rawdir ,('fort.149_' + version))
     headers = ['time' , 'x' ,'y' , 'h' , 'T' ,'u_A' ,'T_0' ,'wind' ,'tau_x']
     data = pd.read_csv(path, sep = '\s+', names = headers)
-    data['time'] = pd.to_datetime(data['time'], unit = 's') + pd.DateOffset(years = -20)    
+    data['time'] = pd.to_datetime(data['time'], unit = 's') + pd.DateOffset(years = -20)   
+    
+    data = pd.to_numeric(data, errors='coerce') # testing
     
     yvals = np.unique(data['y'])
     xvals = np.unique(data['x'])

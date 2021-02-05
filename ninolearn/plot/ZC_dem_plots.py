@@ -93,7 +93,7 @@ def oni_plots(version, showplot = True, comparisonplot = True):
     font = {'family': 'serif',
         'color':  'black',
         'weight': 'normal',
-        'size': 16,
+        'size': 25,
         }    
 
     
@@ -135,6 +135,7 @@ def oni_plots(version, showplot = True, comparisonplot = True):
     if comparisonplot is True:
         plt.plot(ONI.index , ONI, color = 'black',lw =2, label = 'ZC')
         plt.plot(oni_ERSSTv5.index, oni_ERSSTv5, color = 'g', ls = '--', lw =3, label = 'ERSSTv5')
+        plt.title(f'Comparison plot for version: {version}')
         plt.legend()
         plt.grid()
         plt.ylabel('ONI', fontdict = font )
