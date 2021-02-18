@@ -269,7 +269,10 @@ def ZC_raw(version = 'default'):
     data = pd.read_csv(path, sep = '\s+', names = headers)
     data['time'] = pd.to_datetime(data['time'], unit = 's') + pd.DateOffset(years = -20)   
     
-    data = pd.to_numeric(data, errors='coerce') # testing
+    if any(data.dtypes == 'O'):
+        data = data.apply(pd.to_numeric, errors = 'coerce')
+        data = data.dropna()
+    
     
     yvals = np.unique(data['y'])
     xvals = np.unique(data['x'])
@@ -280,6 +283,8 @@ def ZC_raw(version = 'default'):
     
     ZCgridT = np.zeros(( xvals.shape[0], yvals.shape[0], tvals.shape[0]))
     ZCgridh = np.zeros(( xvals.shape[0], yvals.shape[0], tvals.shape[0]))
+    
+
     
     for t in enumerate(tvals):
         data_t = data[data['time'] == t[1]]
@@ -345,7 +350,7 @@ def ZC_raw(version = 'default'):
     h = h.assign_attrs(name = 'h')
     h = h.assign_attrs(dataset = 'ZC_'+version)
     
-    h.to_netcdf(join(processeddir, f'h_ZC_{version}.nc')) # should check if this still works after changing code above
+    h.to_netcdf(join(processeddir, f'h_ZC_{version}.nc'))
     
     # output sst and sst anomaly
     sst = ds_new.drop_vars(['thermocline_height'])
@@ -355,7 +360,7 @@ def ZC_raw(version = 'default'):
     sst_anom = computeAnomaly(sst)
     sst['anomaly'] = sst_anom['temperature']
     
-    sst.to_netcdf(join(processeddir, f'sst_ZC_{version}.nc')) ### INPUT FOR NMS (and ONI), NAMING NOW DIFFERENT
+    sst.to_netcdf(join(processeddir, f'sst_ZC_{version}.nc')) 
         
 def ZC_h(version = 'default'):
     '''

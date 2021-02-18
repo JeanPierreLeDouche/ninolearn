@@ -17,7 +17,9 @@ import matplotlib.pyplot as plt
 
 
 ### user inputs here 
-versions= ['mu25v2', 'mu22v2' , 'mu19v2', 'mu28v2', 'mu31v2', 'mu15v2', 'mu11v2', 'mu50v2', 'mu04v2', 'mu70v2']
+# versions= ['mu25v2', 'mu22v2' , 'mu19v2', 'mu28v2', 'mu31v2', 'mu15v2', 'mu11v2', 'mu50v2', 'mu04v2', 'mu70v2', 'mu01', 'de12case1', 'de08case1'] #, 'mu20t2']
+versions = ['mu25v2', 'de12hires', 'de08hires']
+
 versions.sort()
 individual_plots = False
 compare_versions = True
@@ -42,7 +44,7 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
     font = {'family': 'serif',
             'color':  'black',
             'weight': 'normal',
-            'size': 25,
+            'size': 20,
             }    
     
     def plot_name(ver_name):
@@ -77,14 +79,23 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
             ONI = ONI_full['anom']
             ONI.index = pd.to_datetime(ONI_full['time'])
             
-            plt.plot(ONI.index, ONI, label = plot_name(version))
+            if version[0:2] == 'mu':
+                ls = 'solid'
+                lw = 2
+            elif version[0:2] == 'de':
+                ls = 'dotted'
+                lw = 3
+            else:
+                print('ERROR: No linestyle selected from version name')
+            
+            plt.plot(ONI.index, ONI, label = plot_name(version), ls = ls, lw = lw)
             plt.legend()
             
             plt.xlabel('time', fontdict = font)
             plt.ylabel('ONI', fontdict = font)
-            plt.title(r'Several runs of ZC87 with different values of $\mu$', fontdict = font)
-        print('saving mu comparison')
-        plt.savefig(join(plotdir, 'mu_comparison'))
+            plt.title(r'Several runs of ZC87 with different parameter values', fontdict = font)
+        print('saving parameter comparison')
+        plt.savefig(join(plotdir, 'parameter_comparison'))
             
 diagnostics = ZConi_evaluate(versions, individual_plots, compare_versions)
 
