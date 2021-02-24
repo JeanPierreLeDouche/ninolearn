@@ -402,7 +402,7 @@ class DEM(baseModel):
         """
         if location is None:
             location = getcwd()
-
+            
         path = join(location, dir_name, '*.h5')
         files = glob.glob(path)
         self.hyperparameters = {}
@@ -412,7 +412,6 @@ class DEM(baseModel):
         for file in files:
             file_path = join(path, file)
             self.ensemble.append(load_model(file_path))
-
         output_neurons = self.ensemble[0].get_output_shape_at(0)[1]
 
         if output_neurons==2:

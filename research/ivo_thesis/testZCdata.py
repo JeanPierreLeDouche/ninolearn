@@ -18,11 +18,15 @@ import matplotlib.pyplot as plt
 
 ### user inputs here 
 # versions= ['mu25v2', 'mu22v2' , 'mu19v2', 'mu28v2', 'mu31v2', 'mu15v2', 'mu11v2', 'mu50v2', 'mu04v2', 'mu70v2', 'mu01', 'de12case1', 'de08case1'] #, 'mu20t2']
-versions = ['mu25v2', 'de12hires', 'de08hires']
+# versions = ['mu25v2','mu25de10', 'mu24v3', 'mu27v3'] #  'de12hires', 'de08hires', 
+
+# versions = ['mu24v3', 'mu16v3', 'mu19v3', 'mu21v3', 'mu27v3']
+versions = ['mu11v3', 'mu34v3', 'mu39v3']
 
 versions.sort()
 individual_plots = False
 compare_versions = True
+plotname = 'new_23feb'
 ###
 
 def ZConi_evaluate(versions, individual_plots = False, compare_versions = True): 
@@ -80,10 +84,11 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
             ONI.index = pd.to_datetime(ONI_full['time'])
             
             if version[0:2] == 'mu':
-                ls = 'solid'
+                ls = 'dotted'
                 lw = 2
             elif version[0:2] == 'de':
-                ls = 'dotted'
+                # ls = 'dotted'
+                ls = 'solid'
                 lw = 3
             else:
                 print('ERROR: No linestyle selected from version name')
@@ -95,7 +100,7 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
             plt.ylabel('ONI', fontdict = font)
             plt.title(r'Several runs of ZC87 with different parameter values', fontdict = font)
         print('saving parameter comparison')
-        plt.savefig(join(plotdir, 'parameter_comparison'))
+        plt.savefig(join(plotdir, f'parameter_comparison_{plotname}'))
             
 diagnostics = ZConi_evaluate(versions, individual_plots, compare_versions)
 

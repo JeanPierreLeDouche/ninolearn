@@ -1,4 +1,4 @@
-env"""
+"""
 This module aims to standardize the training and evaluation procedure.
 """
 import numpy as np
@@ -12,7 +12,8 @@ from ninolearn.utils import print_header, small_print_header
 from ninolearn.pathes import modeldir, processeddir
 
 # evaluation decades
-decades = [1963, 1972, 1982, 1992, 2002, 2012, 2018]
+# decades = [1963, 1972, 1982, 1992, 2002, 2012, 2018]
+decades = [1953, 1962, 1972] # decades for ZC
 decades_elninolike = []
 
 n_decades = len(decades)
@@ -21,8 +22,8 @@ n_decades = len(decades)
 lead_times = [0, 3, 6, 9, 12, 15, 18, 21]
 n_lead = len(lead_times)
 
-decade_color = ['orange', 'violet', 'limegreen', 'darkgoldenrod', 'red', 'royalblue']
-decade_name = ['1963-1971', '1972-1981', '1982-1991', '1992-2001', '2002-2011', '2012-2017']
+decade_color = ['orange', 'violet', 'limegreen' ]#, 'darkgoldenrod', 'red', 'royalblue']
+decade_name = ['1963-1971', '1972-1981', '1982-1991'] #, '1992-2001', '2002-2011', '2012-2017']
 
 
 def cross_training(model, pipeline, n_iter, **kwargs):
@@ -39,12 +40,12 @@ def cross_training(model, pipeline, n_iter, **kwargs):
 
     :param save_dir: The prefix of the save directory.
 
-    :param **kwargs: Arguments that shell be passed to the .set_parameter() \
+    :param **kwargs: Arguments that shall be passed to the .set_parameter() \
     method of the provided model.
     """
 
     for lead_time in lead_times:
-        X, y, timey = pipeline(lead_time, return_persistance=False)
+        X, y, timey = pipeline(lead_time) #, return_persistance=False)
 
         print_header(f'Lead time: {lead_time} month')
 
@@ -88,7 +89,7 @@ def cross_hindcast(model, pipeline, model_name, **kwargs):
         lead_time = lead_times[i]
         print_header(f'Lead time: {lead_time} months')
 
-        X, y, timey, y_persistance = pipeline(lead_time, return_persistance=True)
+        X, y, timey = pipeline(lead_time)
 
         ytrue = np.array([])
         timeytrue = pd.DatetimeIndex([])
@@ -101,8 +102,8 @@ def cross_hindcast(model, pipeline, model_name, **kwargs):
             test_indeces = (timey>=f'{decades[j]}-01-01') & (timey<=f'{decades[j+1]-1}-12-01')
             testX, testy, testtimey = X[test_indeces,:], y[test_indeces], timey[test_indeces]
 
-            m = model(**kwargs)
-            m.load(location=modeldir, dir_name=f'{model_name}_decade{decades[j]}_lead{lead_time}')
+            m = model#(**kwargs)
+            m.load(m, location=modeldir, dir_name=f'{model_name}_decade{decades[j]}_lead{lead_time}')
 
             # allocate arrays and variables for which the model must be loaded
             if first_dec_loop:
@@ -161,7 +162,8 @@ def cross_hindcast_dem(model, pipeline, model_name):
     :param pipeline: The data pipeline that already was used before in \
     .cross_training().
     """
-    #cross_hindcast(model, pipeline, model_name)
+    print("updated code #2 (!)")
+    cross_hindcast(model, pipeline, model_name)
 
     std_estimate = xr.open_dataarray(join(processeddir, f'{model_name}_std_estimate.nc'))
 
@@ -171,7 +173,7 @@ def cross_hindcast_dem(model, pipeline, model_name):
         lead_time = lead_times[i]
         print_header(f'Lead time: {lead_time} months')
 
-        X, y, timey, y_persistance = pipeline(lead_time, return_persistance=True)
+        X, y, timey = pipeline(lead_time)
 
         ytrue = np.array([])
         timeytrue = pd.DatetimeIndex([])
