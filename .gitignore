@@ -110,3 +110,6 @@ private.py
 
 # netcdf files
 *.nc
+
+# ZC stuff
+*.149
