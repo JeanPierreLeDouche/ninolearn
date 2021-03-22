@@ -3,7 +3,7 @@ import numpy as np
 import keras.backend as K
 from keras.activations import elu
 from keras.models import Model, save_model, load_model
-from keras.layers import Dense, Input, concatenate
+from keras.layers import Dense, Input, concatenate#Flo
 from keras.layers import Dropout, GaussianNoise
 from keras.optimizers import Adam, RMSprop
 from keras.callbacks import EarlyStopping
@@ -177,10 +177,10 @@ class DEM(baseModel):
         mu = GaussianNoise(self.hyperparameters['noise_mu'],
                            name='noise_mu')(mu)
 
-
+    
         if self.hyperparameters['pdf']=='normal' or self.hyperparameters['pdf']=='skewed':
             sigma = Dense(1, activation='softplus',
-                          kernel_regularizer=regularizers.l1_l2(self.hyperparameters['l1_sigma'],
+                          kernel_regularizer=regularizers.l1_l2(self.hyperparameters['l1_sigma'], #UnboundLocalError: local variable 'logs' referenced before assignment
                                                                 self.hyperparameters['l2_sigma']),
                           kernel_initializer='random_uniform',
                           bias_initializer='zeros',
@@ -283,6 +283,7 @@ class DEM(baseModel):
                     valXens = trainX[start_ind:end_ind]
                     valyens = trainy[start_ind:end_ind]
 
+
                     if False:
                         valXens, trainXens = trainXens, valXens
                         valyens, trainyens = trainyens, valyens
@@ -377,7 +378,6 @@ class DEM(baseModel):
             loss =  np.mean(summed, axis=-1)
             return loss
 
-
     def save(self, location='', dir_name='ensemble'):
         """
         Save the ensemble
@@ -405,13 +405,15 @@ class DEM(baseModel):
             
         path = join(location, dir_name, '*.h5')
         files = glob.glob(path)
+        
         self.hyperparameters = {}
         self.hyperparameters['n_members'] = len(files)
         self.ensemble = []
 
         for file in files:
             file_path = join(path, file)
-            self.ensemble.append(load_model(file_path))
+            self.ensemble.append(load_model(file_path, compile=False))
+        
         output_neurons = self.ensemble[0].get_output_shape_at(0)[1]
 
         if output_neurons==2:

@@ -13,7 +13,7 @@ from ninolearn.pathes import modeldir, processeddir
 
 # evaluation decades
 # decades = [1963, 1972, 1982, 1992, 2002, 2012, 2018]
-decades = [1953, 1962, 1972] # decades for ZC
+decades = [1953, 1962, 1972, 1982, 1992] # boundaries for ZC decades 
 decades_elninolike = []
 
 n_decades = len(decades)
@@ -23,17 +23,17 @@ lead_times = [0, 3, 6, 9, 12, 15, 18, 21]
 n_lead = len(lead_times)
 
 decade_color = ['orange', 'violet', 'limegreen' ]#, 'darkgoldenrod', 'red', 'royalblue']
-decade_name = ['1963-1971', '1972-1981', '1982-1991'] #, '1992-2001', '2002-2011', '2012-2017']
+decade_name = ['1953-1962', '1962-1971', '1972-1981', '1982-1991'] #, '1992-2001', '2002-2011', '2012-2017']
 
 
-def cross_training(model, pipeline, n_iter, **kwargs):
+def cross_training(model, pipeline, n_iter, modelname, **kwargs):
     """
     Training the model on different training sets in which each time a period\
     corresponding to a decade out of 1962-1971, 1972-1981, ..., 2012-last \
     ovserved date is spared.
 
     :param model: A model that follows the guidelines how a model object\
-    should be set up.
+    should be set up.py
 
     :param pipeline: a function that takes lead time as argument and returns\
     the corresponding feature, label, time and persistance.
@@ -44,6 +44,7 @@ def cross_training(model, pipeline, n_iter, **kwargs):
     method of the provided model.
     """
 
+
     for lead_time in lead_times:
         X, y, timey = pipeline(lead_time) #, return_persistance=False)
 
@@ -51,6 +52,7 @@ def cross_training(model, pipeline, n_iter, **kwargs):
 
         for j in range(n_decades-1):
             m = model(**kwargs)
+            m.hyperparameters['name'] = modelname
             dir_name = f"{m.hyperparameters['name']}_decade{decades[j]}_lead{lead_time}"
             path = join(modeldir, dir_name)
 
@@ -64,7 +66,7 @@ def cross_training(model, pipeline, n_iter, **kwargs):
                 test_indeces = (timey>=f'{decades[j]}-01-01') & (timey<=f'{decades[j+1]-1}-12-01')
                 train_indeces = np.invert(test_indeces)
                 trainX, trainy, traintime = X[train_indeces,:], y[train_indeces], timey[train_indeces]
-
+                # print(trainX)
                 m.fit_RandomizedSearch(trainX, trainy, traintime, n_iter=n_iter)
                 m.save(location=modeldir, dir_name=dir_name)
 
@@ -78,13 +80,13 @@ def cross_hindcast(model, pipeline, model_name, **kwargs):
     trained by the .cross_training() method.
 
     :param model: The considered model.
-
+http://localhost:8888/notebooks/Documents/GitHub/ninolearn/docs-sphinx/source/jupyter_notebook_tutorials/StandardizedResearch.ipynb#Cross-train-the-model
     :param pipeline: The data pipeline that already was used before in \
     .cross_training().
     """
 
     first_lead_loop = True
-
+    print(f'decades: {decades}')
     for i in range(n_lead):
         lead_time = lead_times[i]
         print_header(f'Lead time: {lead_time} months')
@@ -102,8 +104,8 @@ def cross_hindcast(model, pipeline, model_name, **kwargs):
             test_indeces = (timey>=f'{decades[j]}-01-01') & (timey<=f'{decades[j+1]-1}-12-01')
             testX, testy, testtimey = X[test_indeces,:], y[test_indeces], timey[test_indeces]
 
-            m = model#(**kwargs)
-            m.load(m, location=modeldir, dir_name=f'{model_name}_decade{decades[j]}_lead{lead_time}')
+            m = model(**kwargs)
+            m.load(location=modeldir, dir_name=f'{model_name}_decade{decades[j]}_lead{lead_time}')
 
             # allocate arrays and variables for which the model must be loaded
             if first_dec_loop:
@@ -123,13 +125,14 @@ def cross_hindcast(model, pipeline, model_name, **kwargs):
             ytrue = np.append(ytrue, testy)
             timeytrue = timeytrue.append(testtimey)
             del m
+        ### IG: following code only relevant for real measurement timeseries
+        
+        # if timeytrue[0]!=pd.to_datetime('1953-01-01'): # IG: changed 1963 to 1953
+        #     expected_first_date = '1953-01-01'
+        #     got_first_date = timeytrue[0].isoformat()[:10]
 
-        if timeytrue[0]!=pd.to_datetime('1963-01-01'):
-            expected_first_date = '1963-01-01'
-            got_first_date = timeytrue[0].isoformat()[:10]
-
-            raise Exception(f"The first predicted date for lead time {lead_time} \
-                            is {got_first_date} but expected {expected_first_date}")
+        #     raise Exception(f"The first predicted date for lead time {lead_time} \
+        #                     is {got_first_date} but expected {expected_first_date}")
 
         # allocate arrays and variables for which the full length of the time
         # series must be known
@@ -137,7 +140,6 @@ def cross_hindcast(model, pipeline, model_name, **kwargs):
             n_time = len(timeytrue)
             pred_save =  np.zeros((n_outputs, n_time, n_lead))
             first_lead_loop=False
-
         pred_save[:,:,i] =  pred_full
 
     # Save data to a netcdf file
@@ -147,7 +149,10 @@ def cross_hindcast(model, pipeline, model_name, **kwargs):
 
     ds = xr.Dataset(save_dict, coords={'target_season': timeytrue,
                                        'lead': lead_times} )
-    ds.to_netcdf(join(processeddir, f'{model_name}_forecasts.nc'))
+    ds.to_netcdf(join(processeddir, f'{model_name}_forecasts.nc'), mode = 'w')
+    # dsmean = ds['mean']
+    # print(f'shape of forecasts.nc file is: {dsmean.shape}')
+    ds.close() 
 
 
 def cross_hindcast_dem(model, pipeline, model_name):
@@ -162,13 +167,14 @@ def cross_hindcast_dem(model, pipeline, model_name):
     :param pipeline: The data pipeline that already was used before in \
     .cross_training().
     """
-    print("updated code #2 (!)")
     cross_hindcast(model, pipeline, model_name)
-
-    std_estimate = xr.open_dataarray(join(processeddir, f'{model_name}_std_estimate.nc'))
+    
+    ### TODO: unpack the std part from dem_forecasts.nc because this code is deprecated
+    std_estimate = xr.open_dataset(join(processeddir, f'{model_name}_forecasts.nc') )['std']
+    # std_estimate = xr.open_dataarray(join(processeddir, f'{model_name}_std_estimate.nc'))
 
     first_lead_loop = True
-
+    print(f'decades: {decades}')
     for i in range(n_lead):
         lead_time = lead_times[i]
         print_header(f'Lead time: {lead_time} months')
@@ -202,7 +208,7 @@ def cross_hindcast_dem(model, pipeline, model_name):
 
             for k in range(len(testtimey)):
                 month = testtimey[k].date().month
-                pred[-1, k] = std_estimate[i, month-1]
+                pred[-1, k] = std_estimate[month-1, i] #IG: swapped indices 'month-1' and i for use with forecasts.nc
 
             # make the full time series
             pred_full = np.append(pred_full, pred, axis=1)
@@ -210,12 +216,12 @@ def cross_hindcast_dem(model, pipeline, model_name):
             timeytrue = timeytrue.append(testtimey)
             del m
 
-        if timeytrue[0]!=pd.to_datetime('1963-01-01'):
-            expected_first_date = '1963-01-01'
-            got_first_date = timeytrue[0].isoformat()[:10]
+        # if timeytrue[0]!=pd.to_datetime('1963-01-01'):
+        #     expected_first_date = '1963-01-01'
+        #     got_first_date = timeytrue[0].isoformat()[:10]
 
-            raise Exception(f"The first predicted date for lead time {lead_time} \
-                            is {got_first_date} but expected {expected_first_date}")
+        #     raise Exception(f"The first predicted date for lead time {lead_time} \
+        #                     is {got_first_date} but expected {expected_first_date}")
 
         # allocate arrays and variables for which the full length of the time
         # series must be known

@@ -110,3 +110,6 @@ private.py
 
 # netcdf files
 *.nc
+
+# ZC 
+research/ivo_thesis/data/raw

@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix
 
 from ninolearn.learn.skillMeasures import seasonal_correlation
+import matplotlib.pyplot as plt
 
 seismic = plt.cm.get_cmap('seismic', 256)
 newcolors = seismic(np.linspace(0, 1, 256))
@@ -83,6 +84,28 @@ def plot_seasonal_skill(lead_time, data, vmin=-1, vmax=1, nlevels=20, cmap=newcm
     ax.set_xticks(m)
     ax.set_xticklabels(seas_ticks, rotation='vertical')
     ax.set_xlabel('Target Season')
+    ax.set_yticks(lead_time)
+    ax.set_yticklabels(lead_time)
+    ax.set_ylabel('Lead Time [Months]')
+    plt.colorbar(C, ticks=np.arange(vmin,vmax+0.1,0.2))
+    plt.tight_layout()
+
+from ninolearn.learn.fit import decade_name
+
+def plot_seasonal_skill_ZC(lead_time, data, vmin=-1, vmax=1, nlevels=20, cmap=newcmp, extend='min'):
+    fig, ax = plt.subplots(figsize=(5,3.5))
+    m = np.arange(1,5)
+
+    levels = np.linspace(vmin, vmax, nlevels+1)
+    C = ax.contourf(m,lead_time, data, levels=levels,
+                vmin=vmin, vmax=vmax,
+                 cmap=cmap, extend=extend)
+    D = ax.contour(m, lead_time, data, levels = [-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9], colors = ['black'], linestyles = ['dashed', 'solid'])
+    ax.clabel(D, inline = True, fontsize = 10)  
+    
+    ax.set_xticks(m)
+    ax.set_xticklabels(decade_name, rotation=30)
+    ax.set_xlabel('Target Decade') ### <-- TODO: make this refer to the decade being predicted 
     ax.set_yticks(lead_time)
     ax.set_yticklabels(lead_time)
     ax.set_ylabel('Lead Time [Months]')

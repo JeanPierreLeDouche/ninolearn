@@ -270,9 +270,8 @@ def ZC_raw(version = 'default'):
     data['time'] = pd.to_datetime(data['time'], unit = 's') + pd.DateOffset(years = -20)   
     
     if any(data.dtypes == 'O'):
+        print('coercing mixed types... fingers crossed')
         data = data.apply(pd.to_numeric, errors = 'coerce')
-        data = data.dropna()
-    
     
     yvals = np.unique(data['y'])
     xvals = np.unique(data['x'])
@@ -294,6 +293,7 @@ def ZC_raw(version = 'default'):
             
             ZCgridT[:,y[0],t[0]] = data_y['T']
             ZCgridh[:,y[0],t[0]] = data_y['h']
+    
     
     ### make lat lon grids out of the ZC cartesian system by calculating the latitude 
     ### from the distance  with respect to a starting point at (-29,124). 
@@ -320,7 +320,6 @@ def ZC_raw(version = 'default'):
     the ZC data needs to be converted into an xarray in order to use the xesmf 
     regridding tool
     """
-    
     ds = xr.Dataset({"temperature": (["lon", "lat", "time"], ZCgridT),
          "thermocline_height": (["lon", "lat", "time"], ZCgridh), },
         coords = { "lat": (['lat'], lats_ZC),
@@ -336,6 +335,8 @@ def ZC_raw(version = 'default'):
     # regrid to 1x1 degrees
     regridder = xe.Regridder(ds, ds_out, 'bilinear')
     ds_new = regridder(ds)
+    
+
     
     # interpolate to first of month
     ds_new = ds_new.interp(time=pd.period_range('1/1/1950', '1/11/1994', freq= 'M').to_timestamp())
@@ -429,7 +430,8 @@ def ZC_oni(version = 'default', NIN34=False):
 def ZC_simple_read(version):
     path = join(rawdir ,('fort.149_' + version))
     headers = ['time' , 'x' ,'y' , 'h' , 'T' ,'u_A' ,'T_0' ,'wind' ,'tau_x']
-    data = pd.read_csv(path, sep = '\s+', names = headers)
+    data = pd.read_csv(path, sep = '\s+', names = headers, low_memory=False)
+    data = data.fillna('')
     data['time'] = pd.to_datetime(data['time'], unit = 's') + pd.DateOffset(years = -20)    
     return data
     

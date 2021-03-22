@@ -14,20 +14,42 @@ from ninolearn.pathes import processeddir, plotdir
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+import datetime
+import time 
 
 ### user inputs here 
 # versions= ['mu25v2', 'mu22v2' , 'mu19v2', 'mu28v2', 'mu31v2', 'mu15v2', 'mu11v2', 'mu50v2', 'mu04v2', 'mu70v2', 'mu01', 'de12case1', 'de08case1'] #, 'mu20t2']
 # versions = ['mu25v2','mu25de10', 'mu24v3', 'mu27v3'] #  'de12hires', 'de08hires', 
 
 # versions = ['mu24v3', 'mu16v3', 'mu19v3', 'mu21v3', 'mu27v3']
-versions = ['mu11v3', 'mu34v3', 'mu39v3']
+# versions = ['mu11v3', 'mu34v3', 'mu39v3']
+# versions = ['mu255v3', 'mu54v3', 'mu49v3', 'mu44v3']
+# versions = ['mu29v4', 'mu28v4', 'mu27v4', 'mu26v4', 'mu25v4', 'mu24v4', 'mu23v4', 'mu22v4']
+# versions = ['mu28v4', 'mu27v4', 'mu26v4', 'mu25v4', 'mu24v4', 'mu23v4', 'mu22v4', 'mu29v4', 'mu30v4', 'mu31v4', 'mu32v4']
+# versions = ['de08v4', 'de09v4', 'de11v4', 'de12v4'] ### wavespeed
+# versions = [ 'ds01v4', 'ds02v4', 'ds04v4', 'ds05v4', 'ds06v4'] ### upwelling feedback  'ds00v4',
+# versions = [ 'dt07v4',  'dt09v4', 'dt11v4', 'dt12v4', 'dt13v4', 'dt14v4', 'dt15v4'] ### sst damping  'dt06v4', 'dt08v4',
+# versions = [ 'ds01v4', 'ds02v4', 'ds04v4'] # new case2 #'ds00v4',
+versions = ['de12v4', 'ds00v4', 'ds05v4', 'ds06v4', 'dt05v4', 'dt06v4', 'dt08v4']
 
 versions.sort()
 individual_plots = False
 compare_versions = True
-plotname = 'new_23feb'
+
+today = str(datetime.date.today()).replace("-", "_")
+plotname = 'case2_new'
+plotname += '_' + today 
 ###
+
+# test data lengths
+
+for version in versions:
+    data = ZC_simple_read(version)
+    data_time = np.unique(data['time'])
+    runtime = pd.to_datetime(data_time[-1]).year -  pd.to_datetime(data_time[0]).year
+    print(f'Dataset version: {version}, time has length: {runtime} years')
+
+     #%%
 
 def ZConi_evaluate(versions, individual_plots = False, compare_versions = True): 
     
@@ -70,6 +92,11 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
     
     ### make individual plots 
     
+    #defaults as follows:
+    ls = 'solid'
+    lw = 3
+    
+    
     if individual_plots == True:
         for version in versions:
             oni_plots(version)
@@ -84,20 +111,23 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
             ONI.index = pd.to_datetime(ONI_full['time'])
             
             if version[0:2] == 'mu':
-                ls = 'dotted'
+                ls = 'solid'
                 lw = 2
             elif version[0:2] == 'de':
                 # ls = 'dotted'
                 ls = 'solid'
                 lw = 3
             else:
-                print('ERROR: No linestyle selected from version name')
+                print('Warning: No linestyle selected from version name !')
             
             plt.plot(ONI.index, ONI, label = plot_name(version), ls = ls, lw = lw)
-            plt.legend()
+            plt.legend(fontsize = 20)
             
             plt.xlabel('time', fontdict = font)
             plt.ylabel('ONI', fontdict = font)
+            
+            plt.yticks(fontsize = 20)
+            plt.xticks(fontsize = 20)
             plt.title(r'Several runs of ZC87 with different parameter values', fontdict = font)
         print('saving parameter comparison')
         plt.savefig(join(plotdir, f'parameter_comparison_{plotname}'))

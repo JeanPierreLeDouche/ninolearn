@@ -304,3 +304,40 @@ def evaluation_seasonal_srmse(model_name, variable_name='mean', background='all'
         seas_srmse[i, :] = seasonal_srmse(obs, pred, obs_time - pd.tseries.offsets.MonthBegin(1))
 
     return seas_srmse
+
+def evaluation_decadal_correlation_ZC(model_name, ZC_version, variable_name = 'mean', start='1953-05',
+                                   end='1991-12' ):
+    """
+    Evaluate the model in the decades 1963-1971, 1972-1981, ..., 2012-2017 using the correlation skill-
+
+    :type model_name: str
+    :param model_name: The name of the model.
+
+    :type variable_name: str
+    :param variable_name: The name of the variable which shell be evaluated\
+    against the ONI prediction.
+
+    :returns: The correlation skill for the 0, 3, 6, 9, 12 and 15-month lead\
+    time and the corresponding p values for the respective decades. The\
+    returned arrays have the shape (lead time, decades).
+    """
+    reader = data_reader(startdate=start, enddate=end)
+
+    # decadal scores
+    decadal_r = np.zeros((n_lead, n_decades-1))
+    decadal_p = np.zeros((n_lead, n_decades-1))
+
+    # ONI observation
+    obs = reader.read_csv('oni_ZC_'+ZC_version)
+    obs_time = obs.index
+
+    for i in range(n_lead):
+        pred_all = reader.read_forecasts(model_name, lead_times[i]) #TODO: this object has data from 1953-05-01 onwards, why is this?
+        pred = pred_all[variable_name]
+
+        for j in range(n_decades-1):
+            indeces = (obs_time>=f'{decades[j]}-01-01') & (obs_time<=f'{decades[j+1]-1}-12-01')
+            
+            decadal_r[i, j], decadal_p[i, j] = pearsonr(obs[indeces].values, pred[indeces].values)
+
+    return decadal_r, decadal_p
