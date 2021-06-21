@@ -330,27 +330,76 @@ def prep_ZConi( filename = 'ZC_SST_undistorted'):
     ONI = SST_NIN34_mly['anomaly'].rolling(window=3, center = True).mean().dropna()
 
     ONI.to_csv(join(processeddir, 'ONI_' + filename + '.csv'))
+    
+from os.path import exists
+from ninolearn.utils import largest_indices, generateFileName
 
-def prep_nms(version = 'default', threshold_corr = 0.97, tstart = 1951, tend = 1981):
+
+def prep_nms(version = 'default', threshold_corr = 0.97, tstart = 1951, tend = 1981, variable='sst'):
     """
     calculates network metrics from ZC sst data
     
-    """        
-    data = xr.open_dataset(join(processeddir, ('sst_ZC_' + version +'.nc')))
-    
-    data25x25 = to2_5x2_5_ZC(data)['temperature']
-    data25x25 = data25x25.rename('sstAnom')
-    data25x25 = data25x25.transpose()
-    
-    data25x25.to_netcdf(join(processeddir, 'sst_ZC_25x25_' + version + '_anom.nc'))   
-    
-    # settings for the computation of the network metrics time series
-    nms = networkMetricsSeries('sst', ('ZC_25x25_'+version), processed="anom",
-                                threshold=threshold_corr, startyear=tstart, endyear=(tend - pd.Timedelta(365, 'D')), # resolves end of year issue
-                                window_size=12, lon_min=124, lon_max=280,
-                                lat_min=-19, lat_max=19, verbose=2)
-    
-    nms.computeTimeSeries()
-    nms.save()    
+    """     
+    if version == 'default': print("Error: no version selected for nms prep!")
+    if variable == 'sst':
+        if not exists(join(processeddir, 'sst_ZC_25x25_' + version + '_anom.nc')):
+            print('No file for 25x25 grid sst found, calculating...')
+            
+            data = xr.open_dataset(join(processeddir, ('sst_ZC_' + version +'.nc')))
+            
+            data25x25 = to2_5x2_5_ZC(data)['temperature']
+            data = data.close()
+            
+            data25x25 = data25x25.rename('sstAnom')
+            data25x25 = data25x25.transpose()
+            
+            data25x25.to_netcdf(join(processeddir, 'sst_ZC_25x25_' + version + '_anom.nc'))
+            
+        # settings for the computation of the network metrics time series
+        nms = networkMetricsSeries('sst', ('ZC_25x25_'+version), processed="anom",
+                                        threshold=threshold_corr, startyear=tstart, endyear=(tend - pd.Timedelta(365, 'D')), # resolves end of year issue
+                                        window_size=12, lon_min=124, lon_max=280,
+                                        lat_min=-19, lat_max=19, verbose=2)
+        
+        filename = generateFileName(nms.variable, nms.dataset, processed=nms.processed, suffix='csv')
+        if not exists(join(processeddir, filename)):
+            print('No network metrics found, calculating...')
+            nms.computeTimeSeries()     
+            nms.save() 
+            
+    if variable == 'h':
+        
+        if not exists(join(processeddir, 'h_ZC_25x25_' + version + '_anom.nc')):
+            print('No file for h 25x25 grid found, calculating...')
+        
+            data = xr.open_dataset(join(processeddir, ('h_ZC_' + version +'.nc')))
+            
+            data25x25 = to2_5x2_5_ZC(data)['thermocline_height']
+            data = data.close()
+            
+            data25x25 = data25x25.rename('hAnom')
+            data25x25 = data25x25.transpose()
+            
+            data25x25.to_netcdf(join(processeddir, 'h_ZC_25x25_' + version + '_anom.nc'))   
 
+                    
+        if not exists('network_metrics-sst_ZC_25x25_'+version+'_anom.csv'):
+            print('No network metrics found, calculating...')
 
+     
+            # settings for the computation of the network metrics time series
+            nms = networkMetricsSeries('h', ('ZC_25x25_'+version), processed="anom",
+                                        threshold=threshold_corr, startyear=tstart, endyear=(tend - pd.Timedelta(365, 'D')), # resolves end of year issue
+                                        window_size=12, lon_min=124, lon_max=280,
+                                        lat_min=-19, lat_max=19, verbose=2)
+        
+            filename = generateFileName(nms.variable, nms.dataset, processed=nms.processed, suffix='csv')
+            nms.computeTimeSeries()     
+            nms.save() 
+            
+        else:
+            print('both 25x25 degree data and network metrics already calculated')
+    else: 
+        pass
+
+    

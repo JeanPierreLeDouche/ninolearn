@@ -9,6 +9,8 @@ from timeit import default_timer as timer
 from ninolearn.IO.read_processed import data_reader
 from ninolearn.pathes import processeddir
 from ninolearn.utils import largest_indices, generateFileName
+from os.path import exists
+
 
 
 logging.basicConfig(format='%(levelname)s:%(message)s')
@@ -408,9 +410,20 @@ class networkMetricsSeries(object):
         NOTE: Specify the data directory as 'datadir' in the ninolear.private
         module which you may not push the public repository.
         """
+        # filename = generateFileName(self.variable,
+        #                             self.dataset,
+        #                             processed=self.processed,
+        #                             suffix='csv')
+
+        # filename = '-'.join(['network_metrics', filename])
+        
+        
+        # if not exists(join(processeddir, filename)):
         while self.reader.enddate <= self.enddate:
             logger.info(f'{self.reader.startdate} till {self.reader.enddate}')
             corrcoef = self.computeCorrelationMatrix()
             self.computeNetworkMetrics(corrcoef)
             self.reader.shift_window(month=1)
         self.save()
+        # else:
+            # print('Network metrics series already calculated!')

@@ -30,26 +30,47 @@ import time
 # versions = [ 'ds01v4', 'ds02v4', 'ds04v4', 'ds05v4', 'ds06v4'] ### upwelling feedback  'ds00v4',
 # versions = [ 'dt07v4',  'dt09v4', 'dt11v4', 'dt12v4', 'dt13v4', 'dt14v4', 'dt15v4'] ### sst damping  'dt06v4', 'dt08v4',
 # versions = [ 'ds01v4', 'ds02v4', 'ds04v4'] # new case2 #'ds00v4',
-versions = ['de12v4', 'ds00v4', 'ds05v4', 'ds06v4', 'dt05v4', 'dt06v4', 'dt08v4']
+# versions = ['de12v4', 'ds00v4', 'ds05v4', 'ds06v4', 'dt05v4', 'dt06v4', 'dt08v4']
+# versions = ['de12v4', 'ds05v4', 'ds06v4']#, 'dt05v4', 'dt06v4', 'dt08v4']
+# versions = ['de08ns', 'de08dsc', 'de12ns', 'de12dsc', 'ds01ns', 'ds01dsc', 'dt13ns', 'dt13dsc']
+
+# versions = ['de08nosc', 'ds01nosc', 'dt13nosc', 'de12nosc']
+# versions = ['de05', 'de20']
+# versions = ['ta11', 'ta13', 'ta17', 'ta20', 'mu28v4']
+# versions = [   'mu26ta50', 'mu28v4'] # 'mu26ta30', 'mu27ta40', 'mu28ta50',
+# versions = ['mu26ta30ltr', 'mu27ta40ltr', 'mu28ta50ltr', 'mu26ta50ltr', 'mu28v4']
+# versions = ['mu26ta70short', 'mu23ta40short', 'mu28v4'] # 'mu24ta50short', 'mu25ta60short',  # only mu23ta40 works
+# versions = ['mu23ta40short', 'mu28v4']
+# versions = [ 'mu25ta60v2', 'mu25ta90v2', 'mu22ta99v2', 'mu23ta90v2']# 'mu26ta70v2',
+
+# versions = ['mu23ta20', 'mu23ta15v2', 'mu24ta15v2', 'mu25ta15v2', 'mu26ta15v2', 'mu24ta20','mu25ta20', 'mu26ta20']
+versions = ['mu23lsr', 'mu23lsr2']
 
 versions.sort()
+
+
 individual_plots = False
 compare_versions = True
-
 today = str(datetime.date.today()).replace("-", "_")
-plotname = 'case2_new'
+plotname = 'amptesting4'
 plotname += '_' + today 
 ###
 
 # test data lengths
+versions_filtered = []
 
 for version in versions:
     data = ZC_simple_read(version)
+    if all(data.dtypes != 'O'):
+        versions_filtered.append(version)
+        print('found other datatypes in data !')
     data_time = np.unique(data['time'])
     runtime = pd.to_datetime(data_time[-1]).year -  pd.to_datetime(data_time[0]).year
     print(f'Dataset version: {version}, time has length: {runtime} years')
-
-     #%%
+    
+versions = versions_filtered
+print('filtered versions are:', versions)
+         #%%
 
 def ZConi_evaluate(versions, individual_plots = False, compare_versions = True): 
     
@@ -75,6 +96,13 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
     
     def plot_name(ver_name):
         string = ver_name[0:2] + ' = ' + ver_name[2] + '.' + ver_name[3] + ' (' + ver_name[4:] + ')'
+        if ver_name[0:2] == 'ta':
+            string = 'tau = ' + ver_name[2] + '.' + ver_name[3] 
+        if ver_name[0:2] == 'mu' and ver_name[4:6] == 'ta':     
+            string = 'mu = ' + ver_name[2] + '.' + ver_name[3] + ' ' + ver_name[4:6] + ' = ' + ver_name[6] + '.' + ver_name[7]
+        if ver_name[0:2] == 'mu' and ver_name[4:6] == 'ta' and ver_name[8:11] == 'ltr':
+            string = 'tau = ' + ver_name[2] + '.' + ver_name[3] + ' ' + ver_name[4:6] + ' = ' + ver_name[6] + '.' + ver_name[7] + '('+ \
+                ver_name[8:] + ')'
         return string
     
     ### calculate values
@@ -111,12 +139,13 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
             ONI.index = pd.to_datetime(ONI_full['time'])
             
             if version[0:2] == 'mu':
-                ls = 'solid'
+                ls = 'dotted'
                 lw = 2
             elif version[0:2] == 'de':
                 # ls = 'dotted'
                 ls = 'solid'
                 lw = 3
+            elif version[0:2] == 'ta': ls = 'solid'
             else:
                 print('Warning: No linestyle selected from version name !')
             
@@ -125,6 +154,7 @@ def ZConi_evaluate(versions, individual_plots = False, compare_versions = True):
             
             plt.xlabel('time', fontdict = font)
             plt.ylabel('ONI', fontdict = font)
+            plt.grid()
             
             plt.yticks(fontsize = 20)
             plt.xticks(fontsize = 20)

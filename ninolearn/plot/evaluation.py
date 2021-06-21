@@ -93,6 +93,9 @@ def plot_seasonal_skill(lead_time, data, vmin=-1, vmax=1, nlevels=20, cmap=newcm
 from ninolearn.learn.fit import decade_name
 
 def plot_seasonal_skill_ZC(lead_time, data, vmin=-1, vmax=1, nlevels=20, cmap=newcmp, extend='min'):
+    """
+    
+    """
     fig, ax = plt.subplots(figsize=(5,3.5))
     m = np.arange(1,5)
 
@@ -111,3 +114,41 @@ def plot_seasonal_skill_ZC(lead_time, data, vmin=-1, vmax=1, nlevels=20, cmap=ne
     ax.set_ylabel('Lead Time [Months]')
     plt.colorbar(C, ticks=np.arange(vmin,vmax+0.1,0.2))
     plt.tight_layout()
+    
+from os.path import join    
+from ninolearn.private import plotdir
+    
+
+def ACC_skill_comparison_ZC(r, rref, lead_times, train_version, test_version, plot_individual = True, plot_avg = False):
+    """
+    plots ACC prediction skill as function of lead time for several decades. 
+    
+    r, rref: correlations between obs and predictions for lead times (axis=0) and decades (axis=1)
+    """
+    
+    colors = ['red', 'green', 'blue', 'purple']
+    plt.title('ACC skill comparison')
+    
+    if plot_individual == True: 
+        for i in range(rref.shape[1]):    
+            plt.plot(lead_times, rref[:,i], label = ('reference (' + str(i+1) + ')'), color = colors[i])
+        for j in range(r.shape[1]):
+            plt.plot(lead_times, r[:,j], label = ('distorted (' + str(j+1) + ')'), ls='--', color = colors [j])
+    if plot_avg == True: 
+        r_avg = np.mean(r, axis = 1)
+        rref_avg = np.mean(rref, axis =1)
+        plt.plot(lead_times, rref_avg, label = 'reference average')
+        plt.plot(lead_times, r_avg, label = 'distorted average', ls = '--')
+        
+    
+    plt.xticks(lead_times)
+    plt.xlabel('Lead time (months)')
+    plt.yticks(np.linspace(0,1, 6))
+    plt.ylabel('correlation')
+    # plt.hlines(0.6, -1, 22, ls = 'dotted', color = 'grey', label = 'skilful prediction')
+    plt.grid()
+    
+    plt.legend()
+    
+    plt.savefig(join(plotdir, 'ACC_skill_comparison ' + train_version + '_' + test_version), dpi= 600)
+    

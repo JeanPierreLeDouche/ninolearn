@@ -113,3 +113,7 @@ private.py
 
 # ZC
 research/ivo_thesis/data/raw
+*.149_dt05v4
+fort.149*
+
+data/

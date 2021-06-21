@@ -21,7 +21,7 @@ n_decades = len(decades)
 # lead times for the evaluation
 lead_times = [0, 3, 6, 9, 12, 15, 18, 21]
 n_lead = len(lead_times)
-
+    
 decade_color = ['orange', 'violet', 'limegreen' ]#, 'darkgoldenrod', 'red', 'royalblue']
 decade_name = ['1953-1962', '1962-1971', '1972-1981', '1982-1991'] #, '1992-2001', '2002-2011', '2012-2017']
 
